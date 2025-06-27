@@ -19,10 +19,17 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
+      - name: Set up AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1  
+
       - name: Log in to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v1
         with:
-          region: us-east-1  # AWS region set to us-east-1
+          registries: '343218199136.dkr.ecr.us-east-1.amazonaws.com'
 
       - name: Build Docker image
         run: |
@@ -35,7 +42,7 @@ jobs:
           severity: CRITICAL
           exit-code: 1
           scan-type: "image"
-        continue-on-error: false  # Fail the pipeline if critical vulnerabilities are found
+        continue-on-error: false  
 
       - name: Tag Docker image
         run: |
@@ -44,4 +51,4 @@ jobs:
       - name: Push image to ECR
         run: |
           docker push 343218199136.dkr.ecr.us-east-1.amazonaws.com/myapp:latest
-        if: success()  # Only push if the Trivy scan was successful
+        if: success()  
