@@ -1,4 +1,4 @@
-name: Build-scan
+name: Build,scan,tag,push
 
 on:
   push:
