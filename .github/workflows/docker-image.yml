@@ -1,4 +1,4 @@
-name: Build,scan,tag,push
+name: Build,scan,tag,push to ecr
 
 on:
   push:
