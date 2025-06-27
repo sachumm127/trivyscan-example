@@ -1,4 +1,4 @@
-name: Build,scan,tag,push to ecr
+name: Build, Scan, Tag, Push to ECR
 
 on:
   push:
@@ -66,27 +66,27 @@ jobs:
 
     - name: Build Docker image
       run: |
-        docker build -t myapp:latest .
+        docker build -t myapp:${{ github.sha }} .  
 
     - name: Scan Docker image with Trivy
       uses: aquasecurity/trivy-action@v0.0.10
       with:
-        image-ref: myapp:latest  
+        image-ref: myapp:${{ github.sha }}  # Scan the correctly tagged image
         severity: CRITICAL
         exit-code: 1
         scan-type: "image"
       continue-on-error: true
 
-    - name: Tag Docker image
+    - name: Tag Docker image for ECR
       run: |
-        docker tag myapp:latest ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/myapp:${{ github.sha }}
+        docker tag myapp:${{ github.sha }} ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/myapp:${{ github.sha }}
 
     - name: Push Docker image to ECR
       uses: docker/build-push-action@v5
       with:
         context: .
         push: true
-        tags: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/myapp:${{ github.sha }}
+        tags: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/myapp:${{ github.sha }}  # Push the image with the correct tag
         cache-from: type=none
         platforms: linux/amd64
         labels: |
