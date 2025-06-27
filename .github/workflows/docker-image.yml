@@ -3,12 +3,12 @@ name: Build, Scan, and Push Docker Image
 on:
   push:
     branches:
-      - 'main'
+      - 'master'
     tags:
       - 'v*'  
   pull_request:
     branches:
-      - 'main'
+      - 'master'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
@@ -22,7 +22,7 @@ jobs:
   build_and_scan:
     runs-on: ubuntu-latest
     env:
-      AWS_REGION: eu-central-1  
+      AWS_REGION: us-east-1
 
     outputs:
       image-tag: ${{ steps.image-tag.outputs.tag }}
@@ -71,11 +71,11 @@ jobs:
     - name: Scan Docker image with Trivy
       uses: aquasecurity/trivy-action@v0.0.10
       with:
-        image: myapp:latest
+        image-ref: myapp:latest  
         severity: CRITICAL
         exit-code: 1
         scan-type: "image"
-      continue-on-error: false  # Fail the pipeline if critical vulnerabilities are found
+      continue-on-error: false  
 
     - name: Tag Docker image
       run: |
