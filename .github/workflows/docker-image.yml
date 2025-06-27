@@ -66,7 +66,8 @@ jobs:
 
     - name: Build Docker image
       run: |
-        docker build -t myapp:${{ github.sha }} .  # Explicitly tag the image with commit SHA
+        # Build and tag the image explicitly with the commit SHA
+        docker build -t myapp:${{ github.sha }} .
 
     - name: Scan Docker image with Trivy
       uses: aquasecurity/trivy-action@v0.0.10
@@ -79,17 +80,19 @@ jobs:
 
     - name: Tag Docker image for ECR
       run: |
+        # Tag the image with the ECR repository tag
         docker tag myapp:${{ github.sha }} ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/myapp:${{ github.sha }}
 
     - name: Push Docker image to ECR
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        push: true
-        tags: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/myapp:${{ github.sha }}  # Push the image with the correct tag
-        cache-from: type=none
-        platforms: linux/amd64
-        labels: |
-        #  org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
-        #  org.opencontainers.image.revision=${{ github.sha }}
-        #  org.opencontainers.image.created=${{ github.event.head_commit.timestamp }}
+      run: |
+        # Push only the tagged image
+        docker push ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/myapp:${{ github.sha }}
+
+        # Ensure no other images are pushed accidentally (no untagged images)
+        docker rmi myapp:${{ github.sha }}  # Remove any locally built, untagged images after pushing
+        docker rmi ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/myapp:${{ github.sha }}  # Remove the pushed tag after pushing
+
+    - name: Clean up Docker cache
+      run: |
+        # Optionally clean up build cache to avoid pushing extra layers
+        docker builder prune --force
