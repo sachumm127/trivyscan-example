@@ -66,7 +66,7 @@ jobs:
 
     - name: Build Docker image
       run: |
-        docker build -t myapp:${{ github.sha }} .  
+        docker build -t myapp:${{ github.sha }} .  # Explicitly tag the image with commit SHA
 
     - name: Scan Docker image with Trivy
       uses: aquasecurity/trivy-action@v0.0.10
@@ -90,6 +90,6 @@ jobs:
         cache-from: type=none
         platforms: linux/amd64
         labels: |
-          org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
-          org.opencontainers.image.revision=${{ github.sha }}
-          org.opencontainers.image.created=${{ github.event.head_commit.timestamp }}
+        #  org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+        #  org.opencontainers.image.revision=${{ github.sha }}
+        #  org.opencontainers.image.created=${{ github.event.head_commit.timestamp }}
