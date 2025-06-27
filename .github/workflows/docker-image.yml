@@ -21,23 +21,27 @@ jobs:
 
       - name: Log in to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v1
+        with:
+          region: us-east-1  # AWS region set to us-east-1
 
       - name: Build Docker image
         run: |
-          docker build -t my-app:latest .
+          docker build -t myapp:latest .
 
       - name: Scan Docker image with Trivy
         uses: aquasecurity/trivy-action@v0.0.10
         with:
-          image: my-app:latest
+          image: myapp:latest
           severity: CRITICAL
           exit-code: 1
           scan-type: "image"
-        continue-on-error: false
+        continue-on-error: false  # Fail the pipeline if critical vulnerabilities are found
+
+      - name: Tag Docker image
+        run: |
+          docker tag myapp:latest 343218199136.dkr.ecr.us-east-1.amazonaws.com/myapp:latest
 
       - name: Push image to ECR
         run: |
-          docker tag my-app:latest <aws_account_id>.dkr.ecr.<region>.amazonaws.com/<repository_name>:<tag>
-          docker push <aws_account_id>.dkr.ecr.<region>.amazonaws.com/<repository_name>:<tag>
-        if: success() 
-
+          docker push 343218199136.dkr.ecr.us-east-1.amazonaws.com/myapp:latest
+        if: success()  # Only push if the Trivy scan was successful
