@@ -48,7 +48,7 @@ jobs:
         aws-region: ${{ env.AWS_REGION }}
         role-to-assume: arn:aws:iam::343218199136:role/aws-git-secretmanager  
         role-session-name: github-actions-session
-        web-identity-token-file: ${{ github.token }}  
+       # web-identity-token-file: ${{ github.token }}  
         secrets-manager: true  
         secret-name: AWSSecrets  
 
