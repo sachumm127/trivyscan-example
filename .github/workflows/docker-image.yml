@@ -55,7 +55,7 @@ jobs:
       id: aws-account-id
       run: |
         AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
-        echo "AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID}" >> $GITHUB_ENV  # Store the AWS Account ID as an environment variable  
+        echo "AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID}" >> $GITHUB_ENV  
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
@@ -89,8 +89,8 @@ jobs:
         docker push ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/myapp:${{ github.sha }}
 
         # Ensure no other images are pushed accidentally (no untagged images)
-        docker rmi myapp:${{ github.sha }}  # Remove any locally built, untagged images after pushing
-        docker rmi ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/myapp:${{ github.sha }}  # Remove the pushed tag after pushing
+        docker rmi myapp:${{ github.sha }}  
+        docker rmi ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/myapp:${{ github.sha }} 
 
     - name: Clean up Docker cache
       run: |
