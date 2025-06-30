@@ -1,5 +1,4 @@
 name: Build, Scan, Tag, Push to ECR
-
 on:
   push:
     branches:
@@ -9,66 +8,50 @@ on:
   pull_request:
     branches:
       - 'main'
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
-
 permissions:
-  id-token: write
   contents: read
-
 jobs:
   build_and_scan:
     runs-on: ubuntu-latest
     env:
       AWS_REGION: us-east-1
       APP_NAME: myapp  # Parameterized app name
-
     outputs:
       image-tag: ${{ steps.image-tag.outputs.tag }}
       image-uri: ${{ steps.image-tag.outputs.uri }}
-
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
-
     - name: Generate Image Tag
       id: image-tag
       run: |
         IMAGE_TAG="${{ github.sha }}"
         echo "tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
         echo "Using image tag: $IMAGE_TAG"
-
-    - name: Configure AWS Credentials via Role and Secrets Manager
+    - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
         aws-region: ${{ env.AWS_REGION }}
-        role-to-assume: arn:aws:iam::343218199136:role/aws-git-secretmanager  
-        role-session-name: github-actions-session
-       # web-identity-token-file: ${{ github.token }}  
-        secrets-manager: true  
-        secret-name: AWSSecrets  
-
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
     - name: Retrieve AWS Account ID
       id: aws-account-id
       run: |
         AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
         echo "AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID}" >> $GITHUB_ENV
-
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
-
     - name: Login to Amazon ECR
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v2
-
     - name: Build Docker image
       run: |
         docker build -t ${{ env.APP_NAME }}:${{ github.sha }} .
-
     - name: Scan Docker image with Trivy
       uses: aquasecurity/trivy-action@v0.0.10
       with:
@@ -77,17 +60,14 @@ jobs:
         exit-code: 1
         scan-type: "image"
       continue-on-error: false
-
     - name: Tag Docker image for ECR
       run: |
         docker tag ${{ env.APP_NAME }}:${{ github.sha }} ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.APP_NAME }}:${{ github.sha }}
-
     - name: Push Docker image to ECR
       run: |
         docker push ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.APP_NAME }}:${{ github.sha }}
         docker rmi ${{ env.APP_NAME }}:${{ github.sha }}  
         docker rmi ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.APP_NAME }}:${{ github.sha }}
-
     - name: Clean up Docker cache
       run: |
         docker builder prune --force
