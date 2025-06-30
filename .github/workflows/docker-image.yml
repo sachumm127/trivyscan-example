@@ -12,6 +12,7 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 permissions:
+  id-token: write
   contents: read
 jobs:
   build_and_scan:
@@ -33,12 +34,12 @@ jobs:
         IMAGE_TAG="${{ github.sha }}"
         echo "tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
         echo "Using image tag: $IMAGE_TAG"
-    - name: Configure AWS Credentials
+    - name: Configure AWS Credentials via OIDC
       uses: aws-actions/configure-aws-credentials@v4
       with:
         aws-region: ${{ env.AWS_REGION }}
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        role-to-assume: arn:aws:iam::343218199136:role/aws-git-secretmanager-role
+        role-session-name: github-actions-session
     - name: Retrieve AWS Account ID
       id: aws-account-id
       run: |
