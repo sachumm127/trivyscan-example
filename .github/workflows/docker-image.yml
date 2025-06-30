@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       AWS_REGION: us-east-1
-      APP_NAME: myapp  # Parameterized app name
+      APP_NAME: myapp  
     outputs:
       image-tag: ${{ steps.image-tag.outputs.tag }}
       image-uri: ${{ steps.image-tag.outputs.uri }}
@@ -38,10 +38,8 @@ jobs:
       uses: aws-actions/configure-aws-credentials@v4
       with:
         aws-region: ${{ env.AWS_REGION }}
-        role-to-assume: arn:aws:iam::343218199136:role/aws-git-secretmanager-role
+        role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
         role-session-name: github-actions-session
-        secrets-manager: true
-        secret-name: AWSSecrets
     - name: Retrieve AWS Account ID
       id: aws-account-id
       run: |
