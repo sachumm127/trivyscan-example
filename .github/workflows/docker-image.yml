@@ -40,6 +40,8 @@ jobs:
         aws-region: ${{ env.AWS_REGION }}
         role-to-assume: arn:aws:iam::343218199136:role/aws-git-secretmanager-role
         role-session-name: github-actions-session
+        secrets-manager: true
+        secret-name: AWSSecrets
     - name: Retrieve AWS Account ID
       id: aws-account-id
       run: |
